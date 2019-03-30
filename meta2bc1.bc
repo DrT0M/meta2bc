@@ -1,0 +1,559 @@
+def main
+{
+	initialize
+	133 COMMENT1= # syntax comment starts (left bracket)
+	135 COMMENT0= # syntax comment stops (right bracket)
+	33 comment1= # syntax alt comment starts (exclamation)
+	10 comment0= # syntax alt comment stops (end of line)
+	39 quote1= # syntax quote for strings (single quote)
+	34 quote2= # syntax quote-alternative (double quote)
+	96 quote0= # syntax quote for hexbyte (backtick)
+	syntax_rule_meta2
+	return0
+}
+def indentation { 9 putchar return0 } # tab
+# def indentation { 32 putchar 32 putchar return0 } # 2 spaces
+def syntax_rule_meta2
+{
+	_1000 test_literal
+	matched if # primary_exp first in sequence
+		indent_emit
+		_2000 emit
+		10 putchar
+		indent_emit
+		_3000 emit
+		10 putchar
+		indent_incr
+		indent_emit
+		_4000 emit
+		10 putchar
+		indent_emit
+		_5000 emit
+		10 putchar
+		indent_emit
+		_6000 emit
+		10 putchar
+		indent_emit
+		_7000 emit
+		10 putchar
+		indent_emit
+		_8000 emit
+		10 putchar
+		indent_emit
+		_9000 emit
+		10 putchar
+		indent_emit
+		_A000 emit
+		10 putchar
+		indent_emit
+		_B000 emit
+		10 putchar
+		read_token_id
+		matched require # for primary_exp next in sequence
+		indent_emit
+		_C000 emit
+		last_token emit
+		10 putchar
+		indent_emit
+		_D000 emit
+		10 putchar
+		indent_decr
+		indent_emit
+		_E000 emit
+		10 putchar
+		indent_emit
+		_F000 emit
+		10 putchar
+		indent_emit
+		_0100 emit
+		10 putchar
+		{ # repetition
+			syntax_rule_statement
+			matched while
+			continue
+		} 1 matched=
+		matched require # for primary_exp next in sequence
+		_1100 test_literal
+		matched require # for primary_exp next in sequence
+	fi
+	return0
+}
+def syntax_rule_statement
+{
+	read_token_id
+	matched if # primary_exp first in sequence
+		indent_emit
+		_2100 emit
+		last_token emit
+		10 putchar
+		indent_emit
+		_3100 emit
+		10 putchar
+		indent_incr
+		_4100 test_literal
+		matched require # for primary_exp next in sequence
+		syntax_rule_alternative
+		matched require # for primary_exp next in sequence
+		_5100 test_literal
+		matched require # for primary_exp next in sequence
+		indent_emit
+		_6100 emit
+		10 putchar
+		indent_decr
+		indent_emit
+		_7100 emit
+		10 putchar
+	fi
+	return0
+}
+def syntax_rule_alternative
+{
+	syntax_rule_sequence
+	matched if # primary_exp first in sequence
+		{ # repetition
+			# ( precedence
+			_8100 test_literal
+			matched if # primary_exp first in sequence
+				indent_emit
+				_9100 emit
+				10 putchar
+				indent_incr
+				syntax_rule_sequence
+				matched require # for primary_exp next in sequence
+				indent_decr
+				indent_emit
+				_A100 emit
+				10 putchar
+			fi
+			# ) precedence
+			matched while
+			continue
+		} 1 matched=
+		matched require # for primary_exp next in sequence
+	fi
+	return0
+}
+def syntax_rule_sequence
+{
+	# ( precedence
+	syntax_rule_primary_exp
+	matched if # primary_exp first in sequence
+		indent_emit
+		_B100 emit
+		10 putchar
+	fi
+	matched not if # above alternative
+		syntax_rule_translation
+		matched if # primary_exp first in sequence
+			indent_emit
+			_C100 emit
+			10 putchar
+		fi
+	fi
+	# ) precedence
+	matched if # primary_exp first in sequence
+		indent_incr
+		{ # repetition
+			# ( precedence
+			syntax_rule_primary_exp
+			matched if # primary_exp first in sequence
+				indent_emit
+				_D100 emit
+				10 putchar
+			fi
+			matched not if # above alternative
+				syntax_rule_translation
+				matched if # primary_exp first in sequence
+				fi
+			fi
+			# ) precedence
+			matched while
+			continue
+		} 1 matched=
+		matched require # for primary_exp next in sequence
+		indent_decr
+		indent_emit
+		_E100 emit
+		10 putchar
+	fi
+	return0
+}
+def syntax_rule_primary_exp
+{
+	read_token_id
+	matched if # primary_exp first in sequence
+		indent_emit
+		_F100 emit
+		last_token emit
+		10 putchar
+	fi
+	matched not if # above alternative
+		read_token_str
+		matched if # primary_exp first in sequence
+			indent_emit
+			last_token emit
+			_0200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_1200 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_2200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_3200 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_4200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_5200 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_6200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_7200 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_8200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_9200 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_A200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_B200 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_C200 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		syntax_rule_precedence
+		matched if # primary_exp first in sequence
+		fi
+	fi
+	matched not if # above alternative
+		syntax_rule_repetition
+		matched if # primary_exp first in sequence
+		fi
+	fi
+	return0
+}
+def syntax_rule_repetition
+{
+	_D200 test_literal
+	matched if # primary_exp first in sequence
+		indent_emit
+		_E200 emit
+		10 putchar
+		indent_incr
+		syntax_rule_primary_exp
+		matched require # for primary_exp next in sequence
+		indent_emit
+		_F200 emit
+		10 putchar
+		indent_emit
+		_0300 emit
+		10 putchar
+		indent_decr
+		indent_emit
+		_1300 emit
+		10 putchar
+	fi
+	return0
+}
+def syntax_rule_precedence
+{
+	_2300 test_literal
+	matched if # primary_exp first in sequence
+		indent_emit
+		_3300 emit
+		10 putchar
+		syntax_rule_alternative
+		matched require # for primary_exp next in sequence
+		_4300 test_literal
+		matched require # for primary_exp next in sequence
+		indent_emit
+		_5300 emit
+		10 putchar
+	fi
+	return0
+}
+def syntax_rule_translation
+{
+	_6300 test_literal
+	matched if # primary_exp first in sequence
+		{ # repetition
+			syntax_rule_directive
+			matched while
+			continue
+		} 1 matched=
+		matched require # for primary_exp next in sequence
+		_7300 test_literal
+		matched require # for primary_exp next in sequence
+	fi
+	return0
+}
+def syntax_rule_directive
+{
+	read_token_str
+	matched if # primary_exp first in sequence
+		indent_emit
+		last_token emit
+		_8300 emit
+		10 putchar
+	fi
+	matched not if # above alternative
+		read_token_dig
+		matched if # primary_exp first in sequence
+			indent_emit
+			last_token dig2num 1 printd
+			_9300 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		read_token_hex
+		matched if # primary_exp first in sequence
+			indent_emit
+			last_token hex2num 1 printd
+			_A300 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_B300 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_C300 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_D300 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_E300 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_F300 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_0400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_1400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_2400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_3400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_4400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_5400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_6400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_7400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_8400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_9400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_A400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_B400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_C400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_D400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_E400 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_F400 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_0500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_1500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_2500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_3500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_4500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_5500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_6500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_7500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_8500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_9500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_A500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_B500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_C500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_D500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_E500 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_F500 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_0600 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_1600 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_2600 emit
+			10 putchar
+		fi
+	fi
+	matched not if # above alternative
+		_3600 test_literal
+		matched if # primary_exp first in sequence
+			indent_emit
+			_4600 emit
+			10 putchar
+		fi
+	fi
+	return0
+}
+def syntax_rule_license
+{
+	_5600 test_literal
+	matched if # primary_exp first in sequence
+		_6600 test_literal
+		matched require # for primary_exp next in sequence
+		_7600 test_literal
+		matched require # for primary_exp next in sequence
+		_8600 test_literal
+		matched require # for primary_exp next in sequence
+		_9600 test_literal
+		matched require # for primary_exp next in sequence
+		_A600 test_literal
+		matched require # for primary_exp next in sequence
+		_B600 test_literal
+		matched require # for primary_exp next in sequence
+		_C600 test_literal
+		matched require # for primary_exp next in sequence
+		_D600 test_literal
+		matched require # for primary_exp next in sequence
+		_E600 test_literal
+		matched require # for primary_exp next in sequence
+		_F600 test_literal
+		matched require # for primary_exp next in sequence
+		_0700 test_literal
+		matched require # for primary_exp next in sequence
+		_1700 test_literal
+		matched require # for primary_exp next in sequence
+		_2700 test_literal
+		matched require # for primary_exp next in sequence
+		_3700 test_literal
+		matched require # for primary_exp next in sequence
+		_4700 test_literal
+		matched require # for primary_exp next in sequence
+		_5700 test_literal
+		matched require # for primary_exp next in sequence
+		_6700 test_literal
+		matched require # for primary_exp next in sequence
+		_7700 test_literal
+		matched require # for primary_exp next in sequence
+		_8700 test_literal
+		matched require # for primary_exp next in sequence
+		_9700 test_literal
+		matched require # for primary_exp next in sequence
+		_A700 test_literal
+		matched require # for primary_exp next in sequence
+	fi
+	return0
+}

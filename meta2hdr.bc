@@ -1,0 +1,740 @@
+string	Author "DrT0M © 2019"
+string	License "MIT License"
+string	cycbuf ""
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+
+var	cycbuf_eof
+var	cycbuf_head
+var	cycbuf_size
+var	cycbuf_len
+
+def	cycbuf_ofst		{ cycbuf_head                   cycbuf_size % cycbuf +  	return1	}
+def	cycbuf_ofst_inc1	{ cycbuf_head 1 +               cycbuf_size % cycbuf_head=	return0	}
+def k	cycbuf_ofst_incr	{ cycbuf_head k + cycbuf_size + cycbuf_size % cycbuf_head=	return0	}
+def k	cycbuf_ofst_plus	{ cycbuf_head k + cycbuf_size + cycbuf_size % cycbuf +  	return1	}
+
+def	q2_emit			{ 34 1 putc	return0	}	# double quote
+def	q1_emit			{ 39 1 putc	return0	}	# single quote
+def	ht_emit			{  9 1 putc	return0	}	# horizontal tab
+def	cr_emit			{ 13 1 putc	return0	}	# carriage return
+def	lf_emit			{ 10 1 putc	return0	}	# line feed
+def	nl_emit			{ 13 1 putc 10 1 putc return0 }	# DOS new line
+
+###############################################################################
+def tok	emit							# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+{
+	tok -1 c[] 1 <= if
+		tok 1 prints	return0				# emit token verbatim for type 0,1; string name for type -1,-2
+	fi
+
+	tok -1 c[] 2 == if
+		tok dig2num putchar	return0			# emit binary for types 2,3
+	fi
+
+	tok -1 c[] 3 == if
+		tok hex2num putchar	return0			# emit binary for types 2,3
+	fi
+}
+###############################################################################
+var	COMMENT1						# syntax comment starts
+var	COMMENT0						# syntax comment stops
+var	comment1						# syntax alt comment starts
+var	comment0						# syntax alt comment stops
+var	quote1							# syntax quote for strings
+var	quote2							# syntax quote-alternative
+var	quote0							# syntax quote for hexbyte
+
+var	indents
+def	indent_reset		{ 	  0   indents=	return0	}
+def	indent_incr		{ indents 1 + indents=	return0	}
+def	indent_decr		{ indents 1 - indents=	return0	}
+def	indent_emit
+{
+	var k
+	0 k=
+	{
+		k indents < while
+		indentation
+		k 1 + k=
+		continue
+	}
+	return0
+}
+
+string	DEBUG "_debug_"
+string	str_max_len	"123456789-123456789-123456789-123456789-123456789-123456789-123456"
+var	max_str_len
+var	N_strs
+var	N_lines
+var	N_chars
+var	matched
+var	last_token
+var	type_token
+
+string	stack ""
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+	'00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00 '00
+
+var stack_csize
+var stack_wsize
+var stack_items
+###############################################################################
+string ERROR_0 "ERROR : STACK UNDERFLOW"
+def stack_peek
+{
+	var p
+
+	stack_items 0 <= if
+		10 2 putc
+		9 2 putc
+		ERROR_0 2 prints
+		10 2 putc
+		123 exit
+	fi
+
+	stack_items 1 - wsize * p=
+#		stack p 3 + c[]	255 &
+#	8 <<	stack p 2 + c[]	255 & +
+#	8 <<	stack p 1 + c[]	255 & +
+#	8 <<	stack p     c[]	255 & +
+	stack p c[]& @
+#	stack p +    @
+	return1
+}
+###############################################################################
+def stack_pop
+{
+	stack_peek
+	stack_items 1 - stack_items=
+	return1
+}
+###############################################################################
+string ERROR_1 "ERROR : STACK OVERFLOW - LIMIT"
+def token stack_push
+{
+	var d
+	var p
+
+	stack_wsize stack_items <= if
+		10 2 putc
+		9 2 putc
+		ERROR_1 2 prints
+		9 2 putc
+		stack_wsize 2 prints
+		10 2 putc
+		123 exit
+	fi
+
+	stack_items wsize * p=
+#	token			stack p +    =
+	token			stack p c[]& =
+#	token d=	d 255 & stack p     c[]=
+#	d 8 >> d=	d 255 & stack p 1 + c[]=
+#	d 8 >> d=	d 255 & stack p 2 + c[]=
+#	d 8 >> d=	d 255 & stack p 3 + c[]=
+
+	stack_items 1 + stack_items=
+
+	return0
+}
+###############################################################################
+def stack_swap
+{
+	var stack_top_0
+	var stack_below
+	stack_pop stack_top_0=
+	stack_pop stack_below=
+	stack_top_0 stack_push
+	stack_below stack_push
+	return0
+}
+###############################################################################
+def vars_init
+{
+	133 COMMENT1=						# left bracket
+	135 COMMENT0=						# right bracket
+	33 comment1=						# exclaimation
+	10 comment0=						# EOL
+	39 quote1=						# single quote
+	34 quote2=						# double quote
+	96 quote0=						# backtick
+	0 N_strs=
+	0 N_lines=
+	0 N_chars=
+	0 indents=
+	0 matched=
+	1 malloc last_token=
+	0 last_token 0 c[]=
+	str_max_len strlen max_str_len=
+	0 stack_items=
+	256 stack_csize=
+	stack_csize wsize / stack_wsize=
+
+	return0
+}
+###############################################################################
+def initialize
+{
+	vars_init
+	cycbuf_init
+
+	return0
+}
+###############################################################################
+def cycbuf_init
+{
+	var c
+	var p
+	var k
+	0 k=
+	0		cycbuf_eof=
+	0		cycbuf_head=
+	256 		cycbuf_size=				# includes null terminator
+	cycbuf_size 1 - cycbuf_len=				# excludes null terminator
+
+	{
+		k cycbuf_ofst_plus p=				# p = cycbuf_ofst + k
+		0 getc c=					# 0:stdin
+		c -1 == if					# EOF
+			0 p 0 c[]=				# p[0] = 0 or *p = 0
+			p cycbuf_eof=				# cycbuf_eof = p
+			return0
+		else
+			c p 0 c[]=				# p[0] = c or *p = c
+		fi
+		k 1 + k=					# k = k+1
+		k cycbuf_len < while				# while (k < cycbuf_len)	# fill 0 up to cycbuf_len-1; short cycbuf cannot accomodate esp. longer token (string)
+		continue
+	}
+
+	return0
+}
+###############################################################################
+def cycbuf_rot1
+{
+	var c
+	var p
+	cycbuf_ofst p=						# head of buffer
+
+	p 0 c[] 10 == if					# if (*p == '\n')
+		N_lines 1 + N_lines=				# N_lines = N_lines+1
+		0 N_chars=					# N_chars = 0
+	else
+		N_chars 1 + N_chars=				# N_chars = N_chars+1
+	fi
+
+	0 p 0 c[]=						# head of buffer set to 0
+
+	cycbuf_eof if
+		-1 c=
+	else
+		0 getc c=					# 0:stdin
+	fi
+
+	-1 cycbuf_ofst_plus p=					# p = tail of buffer
+	c -1 == if						# EOF
+		0 p 0 c[]=					# ofst[-1] = 0
+		cycbuf_eof not if
+			p cycbuf_eof=				# cycbuf_eof just encountered
+		fi
+	else
+		c p 0 c[]=					# tail of buffer set to c
+	fi
+
+	cycbuf_ofst_inc1					# new head of buffer
+
+	cycbuf_ofst return1
+}
+###############################################################################
+def skip_whitespace
+{
+	var p
+	cycbuf_ofst p=
+
+	{
+		p cycbuf_eof == if				# if (p == cycbuf_eof)
+			return0
+		fi
+
+		p 0 c[] 32 <= if				# ' ' or white space
+			cycbuf_rot1 p=				# read in one, read out one
+			continue
+		fi
+
+		p 0 c[] COMMENT1 == if				# comment starts
+			{
+				cycbuf_rot1 p=			# read in one, read out one
+				p 0 c[] COMMENT0 == until	# comment stops
+				continue
+			}
+			cycbuf_rot1 p=				# read in one, read out one
+			continue
+		fi
+
+		p 0 c[] comment1 == if				# comment starts
+			{
+				cycbuf_rot1 p=			# read in one, read out one
+				p 0 c[] comment0 == until	# comment stops
+				continue
+			}
+			cycbuf_rot1 p=				# read in one, read out one
+			continue
+		fi
+	}
+
+	return0
+}
+###############################################################################
+def str hex2num
+{
+	var H0
+	var H1
+	var p
+	str p=
+
+	p 0 c[] H0=
+	H0 65 < if						# if (H0 < 'A') # 0-9 
+			H0 48 - H0=
+	else	H0 97 < if					# if (H0 < 'a') # A-F 
+			H0 65 - 10 + H0=
+		else						# a-f 
+			H0 97 - 10 + H0=
+		fi
+	fi
+
+	p 1 c[] H1=
+	H1 65 < if						# if (H1 < 'A') # 0-9 
+			H1 48 - H1=
+	else	H1 97 < if					# if (H1 < 'a') # A-F 
+			H1 65 - 10 + H1=
+		else						# a-f 
+			H1 97 - 10 + H1=
+		fi
+	fi
+
+	H0 16 * H1 + return1
+}
+###############################################################################
+def str dig2num
+{
+	var p
+	var d
+	var sign
+	0 sign=
+	str p=
+
+	p 0 c[] 45 == if					# if (*p == '-')
+		-1 sign=					# sign = -1
+		p 1 + p=					# p = p + 1
+	fi
+
+	p 0 c[] 48 - d=						# d = (*p - '0')
+	p 1 + p=						# p = p + 1
+
+	{
+		p 0 c[] 57 <= while				# while ( *p <= '9' )
+		p 0 c[] 48 < until				# while (!(*p < '0'))
+		p 0 c[] 48 - d 10 * + d=			# d = (*p - '0') + d*10
+		p 1 + p=					# p = p + 1
+		continue
+	}
+
+	sign -1 == if						# if (sign == -1)
+		0 d - d=					# d = 0 - d
+	fi
+
+	d return1
+}
+###############################################################################
+def read_token_hex						# expecting quote0 and 2 hex char for one byte `.. 0-9 a-f A-F
+{
+	var p
+	0 matched=
+	skip_whitespace
+	cycbuf_ofst p=
+
+	p cycbuf_eof == if					# if (p == cycbuf_eof)
+		return0
+	fi
+
+	p 0 c[] quote0 != if					# char0 - hex quote
+		return0
+	fi
+
+	1 cycbuf_ofst_plus p=					# char1 - hex char
+			  p 0 c[] 48 <   if return0 fi		#    -< 0
+	p 0 c[] 57 <= not p 0 c[] 65 < & if return0 fi		# 9 <-< A
+	p 0 c[] 70 <= not p 0 c[] 97 < & if return0 fi		# F <-< a
+	p 0 c[] 102 <= not               if return0 fi		# f <-
+
+	2 cycbuf_ofst_plus p=					# char2 - hex char
+			  p 0 c[] 48 <   if return0 fi		#    -< 0
+	p 0 c[] 57 <= not p 0 c[] 65 < & if return0 fi		# 9 <-< A
+	p 0 c[] 70 <= not p 0 c[] 97 < & if return0 fi		# F <-< a
+	p 0 c[] 102 <= not               if return0 fi		# f <-
+
+	3 type_token=						# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+	1 2 type_token make_token last_token=			# make token excluding backtick
+	1 matched=
+	return0
+}
+###############################################################################
+def read_token_dig						# expecting an optional - sign, followed only by digits 0-9, not floating/fixed point
+{
+	var p
+	var k
+	0 k=
+	0 matched=
+	skip_whitespace
+	cycbuf_ofst p=
+
+	p cycbuf_eof == if					# if (p == cycbuf_eof)
+		return0
+	fi
+
+	p 0 c[] 45 == if					# - sign
+		k 1 + k=					# k = k+1
+		k cycbuf_ofst_plus p=				# p = cycbuf_ofst + k
+	fi
+
+	{
+		p 0 c[] 57 <= while				# while ( *p <= '9' )
+		p 0 c[] 48 < until				# while (!(*p < '0'))
+		1 matched=					# matched = 1
+		k 1 + k=					# k = k+1
+		k cycbuf_ofst_plus p=				# p = cycbuf_ofst + k
+		continue
+	}
+
+	matched if
+		2 type_token=					# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+		0 k 1 - type_token make_token last_token=	# make token 0 to k-1
+	fi
+
+	return0
+}
+###############################################################################
+def read_token_id						# expecting initial alpha|underscore, followed by alpha|numeric|underscore
+{
+	var p
+	var k
+	0 k=
+	0 matched=
+	skip_whitespace
+	cycbuf_ofst p=
+
+	p cycbuf_eof == if					# if (p == cycbuf_eof)
+		return0
+	fi
+
+			  p 0 c[] 65 <   if return0 fi		#    -< A
+	p 0 c[] 90 <= not p 0 c[] 95 < & if return0 fi		# Z <-< _
+	p 0 c[] 95 <= not p 0 c[] 97 < & if return0 fi		# _ <-< a
+	p 0 c[] 122 <= not               if return0 fi		# z <-
+
+	{
+		1 matched=					# matched = 1
+		k 1 + k=					# k = k+1
+		k cycbuf_ofst_plus p=				# p = cycbuf_ofst + k
+		                  p 0 c[] 48 <   if break fi	#    -< 0
+		p 0 c[] 57 <= not p 0 c[] 65 < & if break fi	# 9 <-< A
+		p 0 c[] 90 <= not p 0 c[] 95 < & if break fi	# Z <-< _
+		p 0 c[] 95 <= not p 0 c[] 97 < & if break fi	# _ <-< a
+		p 0 c[] 122 <= not               if break fi	# z <-
+		continue
+	}
+
+	matched if
+		1 type_token=					# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+		0 k 1 - type_token make_token last_token=	# make token
+	fi
+
+	return0
+}
+###############################################################################
+def read_token_str						# expecting 'between' | "between"
+{
+	var p
+	var k
+	0 k=
+	0 matched=
+	skip_whitespace
+	cycbuf_ofst p=
+
+	p cycbuf_eof == if					# if (p == cycbuf_eof)
+		return0
+	fi
+
+	p 0 c[] quote1 == if					# syntax quote for strings - open
+		{
+			k 1 + k=				# k = k+1
+			k cycbuf_ofst_plus p=			# p = cycbuf_ofst + k
+			p 0 c[] 0 == if return0 fi		# encounter null terminator before close quote
+			p 0 c[] quote1 == until			# syntax quote for strings - close
+			continue
+		}
+		-1 type_token=					# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+		0 k type_token make_token last_token=		# make token excluding quotes
+		1 matched=
+		return0
+	fi
+
+	p 0 c[] quote2 == if					# syntax quote-alternative - open
+		{
+			k 1 + k=				# k = k+1
+			k cycbuf_ofst_plus p=			# p = cycbuf_ofst + k
+			p 0 c[] 0 == if return0 fi		# encounter null terminator before close quote
+			p 0 c[] quote2 == until			# syntax quote-alternative - close
+			continue
+		}
+		-2 type_token=					# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+		0 k type_token make_token last_token=		# make token excluding quotes
+		1 matched=
+		return0
+	fi
+
+	return0
+}
+###############################################################################
+def first final type make_token
+{								# 		DEBUG	2 prints	# 2:stderr
+								# 9  2 putc	first	2 printd
+								# 9  2 putc	final	2 printd
+								# 9  2 putc	type	2 printd
+								# 10 2 putc
+
+	type 0 < if						# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+		first final type make_token_quoted return1
+	else
+		first final type make_token_unquoted return1
+	fi
+}
+###############################################################################
+def first final type make_token_unquoted			# copy matched input into token string
+{
+	var p
+	var k
+	var tk
+	var token
+	final first - 3 + malloc 1 + token=			# first to final inclusive, plus type and null terminator
+	type token -1 c[]=					# type in token[-1]; string starts with token[0]
+
+	0 k=
+	{
+		k first + cycbuf_ofst_plus p=			# p = cycbuf_ofst + first + k
+		p 0 c[]	token k c[]=				# token[k] = *p
+		k 1 + k=					# k = k+1
+		k final first - <= while			# while (k <= final - first)
+		continue
+	}
+	0 token k c[]=						# null terminator
+								# 		DEBUG	2 prints	# 2:stderr
+								# 9 2 putc token strlen	2 printd
+								# 9 2 putc token	2 prints
+								# 10 2 putc
+	0 k=
+	{
+		cycbuf_rot1 p=					# read in one, shift out one
+		k 1 + k=					# k = k+1
+		k final <= while				# while (k <= final)
+		continue
+	}
+
+	token return1
+}
+###############################################################################
+def c hexchar							# make sure 0 <= c < 16
+{
+	c 10 < if					
+		c      48 + return1				# '0'+c
+	else 						
+		c 10 - 65 + return1				# 'A'+c-10
+	fi						
+}
+###############################################################################
+string	def_str "string "
+def first final type make_token_quoted				# write to stderr string definition quoting matched input; put string name into token string 
+{
+	var c
+	var d
+	var p
+	var k
+	var token
+	7 malloc 1 + token=					# hex right to left ("_1000\0"=1 to 65535="_FFFF\0")
+	type token -1 c[]=					# type in token[-1]; string starts with token[0]
+
+	def_str 2 prints					# 2:stderr "string "
+	N_strs 1 + N_strs=					
+	N_strs d=						
+	0 k=							
+	95 dup token k c[]= 2 putc				# 2:stderr token[0] = '_'
+
+	{							
+		k 1 + k=					
+		d 16 % hexchar c=					
+		c dup token k c[]= 2 putc			# 2:stderr token[0] = c
+		d 4 >> d=					
+
+		k 4 == until					# until (k == 4)
+		continue					
+	}							
+
+	k 1 + k=						
+	0 token k c[]=						# null terminator
+	32 2 putc						# 2:stderr ' '
+	34 2 putc						# 2:stderr '"' open
+
+	0 k=
+	{
+		k first + cycbuf_ofst_plus p=			# p = cycbuf_ofst + first + k
+		k first !=	k final !=	& if		# exclude first and final quotes
+			max_str_len k first - < if
+				-1 require
+			fi
+			p 0 c[] 34 == if			# if (*p == '"') convert to '
+				39 2 putc			# 2:stderr '
+			else					
+				p 0 c[] 2 putc			# 2:stderr *p
+			fi					
+		fi						
+		k 1 + k=					# k = k+1
+		k final first - <= while			# while (k <= final - first)
+		continue
+	}
+
+	34 2 putc						# 2:stderr '"' close
+	10 2 putc						# '\n'
+								# 		DEBUG	2 prints	# 2:stderr
+								# 9 2 putc token strlen	2 printd
+								# 9 2 putc token	2 prints
+								# 10 2 putc
+	0 k=
+	{
+		cycbuf_rot1 p=					# read in one, shift out one
+		k 1 + k=					# k = k+1
+		k final first - <= while			# while (k <= final - first)
+		continue
+	}
+
+	token return1
+}
+###############################################################################
+def target test_literal						# match input buffer to string in target variable
+{								# beware of ordering ('Ivanhoe'|'Ivan'|'I'), not the other way around
+	var target_len
+	var p
+	var k
+	0 k=
+	0 matched=
+	skip_whitespace
+	cycbuf_ofst p=
+	target strlen target_len=				# DEBUG 2 prints 9 2 putc 9 2 putc target_len 2 printd 10 2 putc
+
+	{
+		k target_len < while				# while (k < target_len)
+		target k c[] while				# do not compare null
+		target k c[] p 0 c[] cmp until			# until (*p != target[k])
+		1 matched=					# matched = 1
+		k 1 + k=					# k = k+1
+		k cycbuf_ofst_plus p=				# p = cycbuf_ofst + k
+		continue
+	}
+
+	matched k target_len == & if				# accept full length match
+		0 type_token=					# -2:"str",-1:'str',0:literal,1:id,2:num,3:hex
+		0 k 1 - type_token make_token last_token=	# make token 0 to k-1
+	else
+		0 matched=					# reject partial match
+	fi
+
+	return0
+}
+###############################################################################
+string ERROR0 "ERROR @ EOF"
+string ERROR1 "ERROR @ LINE,CHAR"
+string ERROR2 "EXCEED MAX_STR_LEN"
+string ERROR3 "NOT MATCHED"
+def match require
+{
+	match 1 == if 
+		return0
+	fi
+
+	cycbuf_ofst 0 c[] 0 == if
+		10 2 putc
+		9 2 putc
+		ERROR0 2 prints
+		10 2 putc
+		1 exit
+	fi
+
+	10 2 putc
+	9 2 putc
+	ERROR1 2 prints
+	9 2 putc
+	N_lines 1 + 2 printd
+	9 2 putc
+	N_chars 1 + 2 printd
+	9 2 putc
+	match 0 < if
+		ERROR2 2 prints
+	else
+		ERROR3 2 prints
+	fi
+	10 2 putc
+	1 exit
+}
+###############################################################################
+string	license1	"Copyright © 2019 DrT0M"
+string	license2	""
+string	license3	"Permission is hereby granted, free of charge, to any person"
+string	license4	"obtaining a copy of this software and associated documentation"
+string	license5	"files (the 'Software'), to deal in the Software without"
+string	license6	"restriction, including without limitation the rights to use,"
+string	license7	"copy, modify, merge, publish, distribute, sublicense, and/or"
+string	license8	"sell copies of the Software, and to permit persons to whom the"
+string	license9	"Software is furnished to do so, subject to the following"
+string	license10	"conditions:"
+string	license11	""
+string	license12	"The above copyright notice and this permission notice shall be"
+string	license13	"included in all copies or substantial portions of the Software."
+string	license14	""
+string	license15	"THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,"
+string	license16	"EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES"
+string	license17	"OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND"
+string	license18	"NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT"
+string	license19	"HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,"
+string	license20	"WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING"
+string	license21	"FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR"
+string	license22	"OTHER DEALINGS IN THE SOFTWARE."
+###############################################################################
+# tab stop @ 8
